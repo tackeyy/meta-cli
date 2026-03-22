@@ -1,0 +1,49 @@
+{
+  "name": "meta-ads-cli",
+  "version": "0.1.0",
+  "description": "Meta Ads CLI tool for managing Facebook/Instagram ad campaigns",
+  "type": "module",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "bin": {
+    "mac": "dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/lib/index.d.ts",
+      "default": "./dist/lib/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "facebook-nodejs-business-sdk": "^21.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "typescript": "^5.7.3",
+    "vitest": "^3.1.0"
+  },
+  "files": [
+    "dist/cli",
+    "dist/lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tackeyy/meta-ads-cli.git"
+  },
+  "license": "MIT",
+  "author": "tackeyy",
+  "keywords": [
+    "meta",
+    "facebook",
+    "ads",
+    "marketing",
+    "cli"
+  ]
+}
