@@ -18,7 +18,7 @@ export function loadConfig(): MacConfig {
 
   if (!accountId.startsWith("act_")) {
     throw new Error(
-      `META_ADS_ACCOUNT_ID must start with 'act_'. Got: ${accountId}`,
+      `META_ADS_ACCOUNT_ID must start with 'act_'. Got: ${accountId.slice(0, 6)}...`,
     );
   }
 
