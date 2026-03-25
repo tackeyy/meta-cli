@@ -27,8 +27,19 @@ export function registerAdSetsCommand(
         );
         console.log(formatAdSets(result, getOutputMode()));
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const e = err as any;
+        // Try multiple SDK error formats
+        const apiError = e?.response?.error || e?._body?.error || e?.body?.error;
+        const message = apiError?.error_user_msg
+          || apiError?.message
+          || (err instanceof Error ? err.message : String(err));
         console.error(`Error: ${message}`);
+        if (apiError) {
+          console.error(`Code: ${apiError.code}, Subcode: ${apiError.error_subcode || "N/A"}`);
+          if (apiError.error_user_msg) console.error(`User msg: ${apiError.error_user_msg}`);
+          if (apiError.is_transient) console.error(`(Transient error - retry may succeed)`);
+        }
         process.exit(1);
       }
     });
@@ -91,6 +102,38 @@ export function registerAdSetsCommand(
           console.log(JSON.stringify(result, null, 2));
         } else {
           console.log(`Ad set created: ${result.id}`);
+        }
+      } catch (err: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const e = err as any;
+        // Try multiple SDK error formats
+        const apiError = e?.response?.error || e?._body?.error || e?.body?.error;
+        const message = apiError?.error_user_msg
+          || apiError?.message
+          || (err instanceof Error ? err.message : String(err));
+        console.error(`Error: ${message}`);
+        if (apiError) {
+          console.error(`Code: ${apiError.code}, Subcode: ${apiError.error_subcode || "N/A"}`);
+          if (apiError.error_user_msg) console.error(`User msg: ${apiError.error_user_msg}`);
+          if (apiError.is_transient) console.error(`(Transient error - retry may succeed)`);
+        }
+        process.exit(1);
+      }
+    });
+
+  adsets
+    .command("delete <id>")
+    .description("Delete an ad set")
+    .action(async (id) => {
+      try {
+        const config = loadConfig();
+        const client = new MacClient(config);
+        await client.deleteAdSet(id);
+        const mode = getOutputMode();
+        if (mode === "json") {
+          console.log(JSON.stringify({ id, deleted: true }, null, 2));
+        } else {
+          console.log(`Ad set ${id} deleted.`);
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
