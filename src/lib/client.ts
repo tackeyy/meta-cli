@@ -421,4 +421,30 @@ export class MacClient {
         | undefined,
     }));
   }
+
+  /** Get account recommendations and optimization score */
+  async getRecommendations(): Promise<{
+    recommendations: Array<Record<string, unknown>>;
+  }> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const api = (FacebookAdsApi as any).getDefaultApi();
+    const response = await api.call(
+      "GET",
+      [this.config.accountId, "recommendations"],
+      {
+        fields: [
+          "score",
+          "title",
+          "message",
+          "importance",
+          "recommended_actions",
+          "type",
+        ].join(","),
+        limit: 100,
+      },
+    );
+    return {
+      recommendations: (response?.data || []) as Array<Record<string, unknown>>,
+    };
+  }
 }
