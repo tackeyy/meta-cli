@@ -111,12 +111,13 @@ export class MacClient {
   /** Update a campaign */
   async updateCampaign(
     campaignId: string,
-    params: { name?: string; status?: string; bidStrategy?: string },
+    params: { name?: string; status?: string; dailyBudget?: string; bidStrategy?: string },
   ): Promise<void> {
     const campaign = new Campaign(campaignId);
     const updateParams: Record<string, string> = {};
     if (params.name) updateParams[Campaign.Fields.name] = params.name;
     if (params.status) updateParams[Campaign.Fields.status] = params.status;
+    if (params.dailyBudget) updateParams[Campaign.Fields.daily_budget] = params.dailyBudget;
     if (params.bidStrategy)
       updateParams[Campaign.Fields.bid_strategy] = params.bidStrategy;
     await campaign.update([], updateParams);
@@ -156,6 +157,13 @@ export class MacClient {
       apiParams,
     );
     return (response?.data || []) as Array<Record<string, unknown>>;
+  }
+
+  /** Delete an ad set */
+  async deleteAdSet(adsetId: string): Promise<void> {
+    const adset = new AdSet(adsetId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adset as any).delete([]);
   }
 
   /** List ad sets */

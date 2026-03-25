@@ -69,6 +69,7 @@ export function registerCampaignsCommand(
     .description("Update a campaign")
     .option("--name <name>", "New campaign name")
     .option("--status <status>", "New status (ACTIVE|PAUSED)")
+    .option("--daily-budget <amount>", "Daily budget in account currency (smallest unit)")
     .option(
       "--bid-strategy <strategy>",
       "Bid strategy (LOWEST_COST_WITHOUT_CAP, LOWEST_COST_WITH_BID_CAP, COST_CAP)",
@@ -80,6 +81,7 @@ export function registerCampaignsCommand(
         await client.updateCampaign(id, {
           name: opts.name,
           status: opts.status,
+          dailyBudget: opts.dailyBudget,
           bidStrategy: opts.bidStrategy,
         });
         const mode = getOutputMode();
