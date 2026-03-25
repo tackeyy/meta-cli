@@ -8,6 +8,7 @@ import { registerAdsCommand } from "./commands/ads.js";
 import { registerInsightsCommand } from "./commands/insights.js";
 import { registerImagesCommand } from "./commands/images.js";
 import { registerPagesCommand } from "./commands/pages.js";
+import { registerTargetingCommand } from "./commands/targeting.js";
 
 const program = new Command();
 
@@ -32,5 +33,6 @@ registerAdsCommand(program, getOutputMode);
 registerInsightsCommand(program, getOutputMode);
 registerImagesCommand(program, getOutputMode);
 registerPagesCommand(program, getOutputMode);
+registerTargetingCommand(program, getOutputMode);
 
 program.parse();

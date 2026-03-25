@@ -88,31 +88,74 @@ export class MacClient {
     objective: string;
     status?: string;
     dailyBudget?: string;
+    bidStrategy?: string;
     specialAdCategories?: string[];
   }): Promise<{ id: string }> {
-    const result = await this.account.createCampaign([], {
+    const fields: Record<string, unknown> = {
       [Campaign.Fields.name]: params.name,
       [Campaign.Fields.objective]: params.objective,
       [Campaign.Fields.status]: params.status || "PAUSED",
       [Campaign.Fields.special_ad_categories]:
         params.specialAdCategories || [],
-      ...(params.dailyBudget
-        ? { [Campaign.Fields.daily_budget]: params.dailyBudget }
-        : {}),
-    });
+    };
+    if (params.dailyBudget) {
+      fields[Campaign.Fields.daily_budget] = params.dailyBudget;
+    }
+    if (params.bidStrategy) {
+      fields[Campaign.Fields.bid_strategy] = params.bidStrategy;
+    }
+    const result = await this.account.createCampaign([], fields);
     return { id: result.id };
   }
 
   /** Update a campaign */
   async updateCampaign(
     campaignId: string,
-    params: { name?: string; status?: string },
+    params: { name?: string; status?: string; bidStrategy?: string },
   ): Promise<void> {
     const campaign = new Campaign(campaignId);
     const updateParams: Record<string, string> = {};
     if (params.name) updateParams[Campaign.Fields.name] = params.name;
     if (params.status) updateParams[Campaign.Fields.status] = params.status;
+    if (params.bidStrategy)
+      updateParams[Campaign.Fields.bid_strategy] = params.bidStrategy;
     await campaign.update([], updateParams);
+  }
+
+  /** Delete a campaign */
+  async deleteCampaign(campaignId: string): Promise<void> {
+    const campaign = new Campaign(campaignId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (campaign as any).delete([]);
+  }
+
+  /** Search targeting options (interests, regions, locales) */
+  async searchTargeting(params: {
+    type: string;
+    query: string;
+    countryCode?: string;
+    locationTypes?: string[];
+    limit?: number;
+  }): Promise<Array<Record<string, unknown>>> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const api = (FacebookAdsApi as any).getDefaultApi();
+    const apiParams: Record<string, unknown> = {
+      type: params.type,
+      q: params.query,
+      limit: params.limit || 20,
+    };
+    if (params.countryCode) {
+      apiParams.country_code = params.countryCode;
+    }
+    if (params.locationTypes) {
+      apiParams.location_types = JSON.stringify(params.locationTypes);
+    }
+    const response = await api.call(
+      "GET",
+      ["search"],
+      apiParams,
+    );
+    return (response?.data || []) as Array<Record<string, unknown>>;
   }
 
   /** List ad sets */
