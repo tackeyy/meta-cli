@@ -122,6 +122,34 @@ export function registerAdSetsCommand(
     });
 
   adsets
+    .command("update <id>")
+    .description("Update an ad set")
+    .option("--name <name>", "New ad set name")
+    .option("--status <status>", "New status (ACTIVE|PAUSED)")
+    .option("--daily-budget <amount>", "Daily budget in account currency")
+    .action(async (id, opts) => {
+      try {
+        const config = loadConfig();
+        const client = new MacClient(config);
+        await client.updateAdSet(id, {
+          name: opts.name,
+          status: opts.status,
+          dailyBudget: opts.dailyBudget,
+        });
+        const mode = getOutputMode();
+        if (mode === "json") {
+          console.log(JSON.stringify({ id, updated: true }, null, 2));
+        } else {
+          console.log(`Ad set ${id} updated.`);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Error: ${message}`);
+        process.exit(1);
+      }
+    });
+
+  adsets
     .command("delete <id>")
     .description("Delete an ad set")
     .action(async (id) => {

@@ -31,6 +31,32 @@ export function registerAdsCommand(
     });
 
   ads
+    .command("update <id>")
+    .description("Update an ad")
+    .option("--name <name>", "New ad name")
+    .option("--status <status>", "New status (ACTIVE|PAUSED)")
+    .action(async (id, opts) => {
+      try {
+        const config = loadConfig();
+        const client = new MacClient(config);
+        await client.updateAd(id, {
+          name: opts.name,
+          status: opts.status,
+        });
+        const mode = getOutputMode();
+        if (mode === "json") {
+          console.log(JSON.stringify({ id, updated: true }, null, 2));
+        } else {
+          console.log(`Ad ${id} updated.`);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Error: ${message}`);
+        process.exit(1);
+      }
+    });
+
+  ads
     .command("create")
     .description("Create a new ad")
     .requiredOption("--adset-id <id>", "Ad set ID")
@@ -63,8 +89,16 @@ export function registerAdsCommand(
           console.log(`Ad created: ${result.id}`);
         }
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const e = err as any;
+        const apiError = e?.response?.error || e?.response;
+        const message = apiError?.error_user_msg
+          || apiError?.message
+          || (err instanceof Error ? err.message : String(err));
         console.error(`Error: ${message}`);
+        if (apiError?.error_subcode) console.error(`Subcode: ${apiError.error_subcode}`);
+        if (apiError?.error_user_title) console.error(`Title: ${apiError.error_user_title}`);
+        if (apiError?.error_user_msg) console.error(`Detail: ${apiError.error_user_msg}`);
         process.exit(1);
       }
     });

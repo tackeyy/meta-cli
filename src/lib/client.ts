@@ -263,6 +263,33 @@ export class MacClient {
     return { id: result.id };
   }
 
+  /** Update an ad set */
+  async updateAdSet(
+    adsetId: string,
+    params: { name?: string; status?: string; dailyBudget?: string },
+  ): Promise<void> {
+    const adset = new AdSet(adsetId);
+    const updateParams: Record<string, string> = {};
+    if (params.name) updateParams[AdSet.Fields.name] = params.name;
+    if (params.status) updateParams[AdSet.Fields.status] = params.status;
+    if (params.dailyBudget) updateParams[AdSet.Fields.daily_budget] = params.dailyBudget;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adset as any).update([], updateParams);
+  }
+
+  /** Update an ad */
+  async updateAd(
+    adId: string,
+    params: { name?: string; status?: string },
+  ): Promise<void> {
+    const ad = new Ad(adId);
+    const updateParams: Record<string, string> = {};
+    if (params.name) updateParams[Ad.Fields.name] = params.name;
+    if (params.status) updateParams[Ad.Fields.status] = params.status;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (ad as any).update([], updateParams);
+  }
+
   /** Create an ad */
   async createAd(params: {
     adsetId: string;
