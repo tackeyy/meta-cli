@@ -6,7 +6,7 @@
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
   "bin": {
-    "mac": "dist/cli/index.js"
+    "meta-ads-cli": "dist/cli/index.js"
   },
   "exports": {
     ".": {

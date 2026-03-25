@@ -10,6 +10,8 @@ import type {
 } from "./types.js";
 
 const { FacebookAdsApi, AdAccount, Campaign, AdSet, Ad } = bizSdk;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sdk = bizSdk as any;
 
 export class MacClient {
   private config: MacConfig;
@@ -153,6 +155,109 @@ export class MacClient {
       startTime: a.start_time as string | undefined,
       endTime: a.end_time as string | undefined,
     }));
+  }
+
+  /** Create an ad set */
+  async createAdSet(params: {
+    campaignId: string;
+    name: string;
+    optimizationGoal: string;
+    billingEvent: string;
+    dailyBudget?: string;
+    lifetimeBudget?: string;
+    bidStrategy?: string;
+    bidAmount?: string;
+    targeting: Record<string, unknown>;
+    status?: string;
+    startTime?: string;
+    endTime?: string;
+    promotedObject?: Record<string, unknown>;
+    destinationType?: string;
+  }): Promise<{ id: string }> {
+    const fields: Record<string, unknown> = {
+      [AdSet.Fields.name]: params.name,
+      [AdSet.Fields.campaign_id]: params.campaignId,
+      [AdSet.Fields.optimization_goal]: params.optimizationGoal,
+      [AdSet.Fields.billing_event]: params.billingEvent,
+      [AdSet.Fields.targeting]: params.targeting,
+      [AdSet.Fields.status]: params.status || "PAUSED",
+    };
+    if (params.dailyBudget) {
+      fields[AdSet.Fields.daily_budget] = params.dailyBudget;
+    }
+    if (params.lifetimeBudget) {
+      fields[AdSet.Fields.lifetime_budget] = params.lifetimeBudget;
+    }
+    if (params.bidStrategy) {
+      fields[AdSet.Fields.bid_strategy] = params.bidStrategy;
+    }
+    if (params.bidAmount) {
+      fields[AdSet.Fields.bid_amount] = params.bidAmount;
+    }
+    if (params.startTime) {
+      fields[AdSet.Fields.start_time] = params.startTime;
+    }
+    if (params.endTime) {
+      fields[AdSet.Fields.end_time] = params.endTime;
+    }
+    if (params.promotedObject) {
+      fields[AdSet.Fields.promoted_object] = params.promotedObject;
+    }
+    if (params.destinationType) {
+      fields[AdSet.Fields.destination_type] = params.destinationType;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const acct = this.account as any;
+    const result = await acct.createAdSet([], fields);
+    return { id: result.id };
+  }
+
+  /** Create an ad */
+  async createAd(params: {
+    adsetId: string;
+    name: string;
+    creative: Record<string, unknown>;
+    status?: string;
+    trackingSpecs?: Record<string, unknown>[];
+  }): Promise<{ id: string }> {
+    const fields: Record<string, unknown> = {
+      [Ad.Fields.name]: params.name,
+      [Ad.Fields.adset_id]: params.adsetId,
+      [Ad.Fields.creative]: params.creative,
+      [Ad.Fields.status]: params.status || "PAUSED",
+    };
+    if (params.trackingSpecs) {
+      fields[Ad.Fields.tracking_specs] = params.trackingSpecs;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const acct = this.account as any;
+    const result = await acct.createAd([], fields);
+    return { id: result.id };
+  }
+
+  /** Upload an ad image and return the image hash */
+  async uploadImage(
+    filePath: string,
+  ): Promise<{ hash: string; url: string; name: string }> {
+    const fs = await import("fs");
+    const path = await import("path");
+    const bytes = fs.readFileSync(filePath);
+    const base64 = bytes.toString("base64");
+    const fileName = path.basename(filePath);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const acct = this.account as any;
+    const result = await acct.createAdImage([], {
+      bytes: base64,
+      name: fileName,
+    });
+    const images = result._data?.images || result.images;
+    const imageData = images?.[fileName] || Object.values(images || {})[0];
+    return {
+      hash: imageData?.hash || "",
+      url: imageData?.url || "",
+      name: fileName,
+    };
   }
 
   /** List ads */

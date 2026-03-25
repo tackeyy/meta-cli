@@ -6,11 +6,12 @@ import { registerCampaignsCommand } from "./commands/campaigns.js";
 import { registerAdSetsCommand } from "./commands/adsets.js";
 import { registerAdsCommand } from "./commands/ads.js";
 import { registerInsightsCommand } from "./commands/insights.js";
+import { registerImagesCommand } from "./commands/images.js";
 
 const program = new Command();
 
 program
-  .name("mac")
+  .name("meta-ads-cli")
   .description("Meta Ads CLI — manage Facebook/Instagram ad campaigns")
   .version("0.1.0")
   .option("--json", "Output in JSON format")
@@ -28,5 +29,6 @@ registerCampaignsCommand(program, getOutputMode);
 registerAdSetsCommand(program, getOutputMode);
 registerAdsCommand(program, getOutputMode);
 registerInsightsCommand(program, getOutputMode);
+registerImagesCommand(program, getOutputMode);
 
 program.parse();
