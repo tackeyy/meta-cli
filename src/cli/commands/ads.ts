@@ -35,13 +35,16 @@ export function registerAdsCommand(
     .description("Update an ad")
     .option("--name <name>", "New ad name")
     .option("--status <status>", "New status (ACTIVE|PAUSED)")
+    .option("--creative <json>", "Creative spec as JSON")
     .action(async (id, opts) => {
       try {
         const config = loadConfig();
         const client = new MacClient(config);
+        const creative = opts.creative ? JSON.parse(opts.creative) : undefined;
         await client.updateAd(id, {
           name: opts.name,
           status: opts.status,
+          creative,
         });
         const mode = getOutputMode();
         if (mode === "json") {

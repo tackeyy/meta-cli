@@ -280,12 +280,13 @@ export class MacClient {
   /** Update an ad */
   async updateAd(
     adId: string,
-    params: { name?: string; status?: string },
+    params: { name?: string; status?: string; creative?: Record<string, unknown> },
   ): Promise<void> {
     const ad = new Ad(adId);
-    const updateParams: Record<string, string> = {};
+    const updateParams: Record<string, unknown> = {};
     if (params.name) updateParams[Ad.Fields.name] = params.name;
     if (params.status) updateParams[Ad.Fields.status] = params.status;
+    if (params.creative) updateParams[Ad.Fields.creative] = params.creative;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (ad as any).update([], updateParams);
   }
