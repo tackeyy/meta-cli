@@ -1,12 +1,12 @@
 {
-  "name": "meta-ads-cli",
-  "version": "0.1.0",
-  "description": "Meta Ads CLI tool for managing Facebook/Instagram ad campaigns",
+  "name": "meta-cli",
+  "version": "0.2.0",
+  "description": "Meta CLI — Facebook/Instagram ads + Pages management",
   "type": "module",
   "main": "dist/lib/index.js",
   "types": "dist/lib/index.d.ts",
   "bin": {
-    "meta-ads-cli": "dist/cli/index.js"
+    "meta-cli": "dist/cli/index.js"
   },
   "exports": {
     ".": {

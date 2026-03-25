@@ -62,3 +62,50 @@ export interface AccountInfo {
 }
 
 export type InsightLevel = "campaign" | "adset" | "ad";
+
+// --- Pages ---
+
+export interface PagePostResult {
+  id: string;
+}
+
+export interface PagePhotoPostResult {
+  id: string;
+  postId: string;
+}
+
+export interface PagePost {
+  id: string;
+  message: string;
+  createdTime: string;
+  type: string;
+}
+
+export interface PageInsight {
+  name: string;
+  period: string;
+  title: string;
+  values: Array<{ value: number; endTime: string }>;
+}
+
+export interface CreatePagePostArgs {
+  message: string;
+  link?: string;
+  imagePath?: string;
+}
+
+export interface ListPagePostsOptions {
+  limit?: number;
+}
+
+export interface PageInsightsOptions {
+  since: string;
+  until: string;
+  metrics?: string[];
+}
+
+export interface PageAuthResult {
+  pageId: string;
+  pageName: string;
+  category: string;
+}
