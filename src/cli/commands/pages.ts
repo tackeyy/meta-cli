@@ -106,6 +106,106 @@ export function registerPagesCommand(
       }
     });
 
+  // pages cover
+  pages
+    .command("cover")
+    .description("Update page cover photo")
+    .requiredOption("--image <path>", "Image file path")
+    .action(async (opts) => {
+      try {
+        const result = await getPagesClient().updateCoverPhoto(opts.image);
+        if (getOutputMode() === "json") {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(`Cover photo updated successfully`);
+          if (result.id) console.log(`  ID: ${result.id}`);
+          if (result.source) console.log(`  Source: ${result.source}`);
+        }
+      } catch (err: unknown) {
+        handleError(err);
+      }
+    });
+
+  // pages token-info
+  pages
+    .command("token-info")
+    .description(
+      "Check token validity and expiry via /debug_token (requires META_ADS_ACCESS_TOKEN as inspector token)",
+    )
+    .action(async () => {
+      try {
+        // META_ADS_ACCESS_TOKEN を inspector token として使用
+        // (同アプリの有効なトークンなら debug_token の access_token に使える)
+        const inspectorToken = process.env.META_ADS_ACCESS_TOKEN;
+        if (!inspectorToken) {
+          console.error(
+            "Error: META_ADS_ACCESS_TOKEN must be set (used as inspector token for /debug_token)",
+          );
+          process.exit(1);
+        }
+        const result = await getPagesClient().tokenInfo(inspectorToken);
+        if (getOutputMode() === "json") {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(`Token valid: ${result.isValid}`);
+          console.log(`Token type:  ${result.tokenType}`);
+          console.log(`App ID:      ${result.appId}`);
+          if (result.userId) console.log(`User ID:     ${result.userId}`);
+          if (result.neverExpires) {
+            console.log(`Expires:     Never (永久トークン)`);
+          } else if (result.expiresAtIso) {
+            const days = result.daysRemaining ?? "?";
+            const warn =
+              typeof result.daysRemaining === "number" &&
+              result.daysRemaining <= 7
+                ? " ⚠️ 期限まで7日以内!"
+                : "";
+            console.log(`Expires:     ${result.expiresAtIso} (残${days}日)${warn}`);
+          }
+          if (result.scopes.length > 0) {
+            console.log(`Scopes:      ${result.scopes.join(", ")}`);
+          }
+        }
+      } catch (err: unknown) {
+        handleError(err);
+      }
+    });
+
+  // pages token-refresh
+  pages
+    .command("token-refresh")
+    .description(
+      "Refresh/extend the page token via fb_exchange_token (requires ZEIMU_FB_APP_ID and ZEIMU_FB_APP_SECRET)",
+    )
+    .action(async () => {
+      try {
+        const appId = process.env.ZEIMU_FB_APP_ID;
+        const appSecret = process.env.ZEIMU_FB_APP_SECRET;
+        if (!appId || !appSecret) {
+          console.error(
+            "Error: ZEIMU_FB_APP_ID and ZEIMU_FB_APP_SECRET must be set",
+          );
+          process.exit(1);
+        }
+        const result = await getPagesClient().tokenRefresh(appId, appSecret);
+        if (getOutputMode() === "json") {
+          console.log(JSON.stringify(result, null, 2));
+        } else if (result.success) {
+          console.log(`Token refresh successful`);
+          if (result.expiresAtIso) {
+            console.log(`  New expiry: ${result.expiresAtIso}`);
+          }
+          console.log(`  New token (update ZEIMU_FB_PAGE_TOKEN):`);
+          console.log(`  ${result.newToken}`);
+        } else {
+          console.error(`Token refresh failed: ${result.message}`);
+          process.exit(1);
+        }
+      } catch (err: unknown) {
+        handleError(err);
+      }
+    });
+
   // pages insights
   pages
     .command("insights")

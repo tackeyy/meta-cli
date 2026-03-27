@@ -109,3 +109,29 @@ export interface PageAuthResult {
   pageName: string;
   category: string;
 }
+
+export interface PageCoverPhotoResult {
+  id: string;
+  source: string;
+}
+
+export interface PageTokenInfo {
+  isValid: boolean;
+  tokenType: string; // USER, PAGE, APP, SYSTEM_USER, etc.
+  appId: string;
+  userId?: string;
+  expiresAt?: number; // Unix timestamp (0 = never expires)
+  expiresAtIso?: string; // ISO 8601 (null if never expires)
+  daysRemaining?: number; // null if never expires
+  neverExpires: boolean;
+  scopes: string[];
+  rawData: Record<string, unknown>;
+}
+
+export interface PageTokenRefreshResult {
+  success: boolean;
+  newToken?: string;
+  expiresAt?: number;
+  expiresAtIso?: string;
+  message: string;
+}

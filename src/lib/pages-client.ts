@@ -9,6 +9,9 @@ import type {
   ListPagePostsOptions,
   PageInsightsOptions,
   PageAuthResult,
+  PageCoverPhotoResult,
+  PageTokenInfo,
+  PageTokenRefreshResult,
 } from "./types.js";
 
 const API_VERSION = "v21.0";
@@ -117,6 +120,136 @@ export class PagesClient {
       createdTime: String(p.created_time),
       type: String(p.type ?? "status"),
     }));
+  }
+
+  async updateCoverPhoto(imagePath: string): Promise<PageCoverPhotoResult> {
+    const fileBuffer = readFileSync(imagePath);
+    const fileName = basename(imagePath);
+
+    const formData = new FormData();
+    formData.append("source", new Blob([fileBuffer]), fileName);
+
+    const data = await this.request<Record<string, unknown>>(
+      `/${this.pageId}`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    return {
+      id: String(data.id ?? ""),
+      source: String((data.cover as Record<string, unknown>)?.source ?? ""),
+    };
+  }
+
+  /**
+   * /debug_token でトークン情報を取得する
+   * inspectorToken: debug_token の access_token パラメータに使うトークン
+   *   （App Access Token = "{app_id}|{app_secret}" or 同アプリの有効なユーザートークン）
+   */
+  async tokenInfo(inspectorToken: string): Promise<PageTokenInfo> {
+    const url = `${BASE_URL}/debug_token?input_token=${encodeURIComponent(this.pageToken)}&access_token=${encodeURIComponent(inspectorToken)}`;
+    const response = await fetch(url);
+    const json = await response.json();
+
+    if (!response.ok) {
+      const error = (json as Record<string, unknown>).error as
+        | Record<string, unknown>
+        | undefined;
+      const message = error?.message ?? response.statusText;
+      throw new Error(`Facebook Debug Token API Error: ${message}`);
+    }
+
+    const data = (json as Record<string, unknown>).data as Record<
+      string,
+      unknown
+    >;
+    if (!data) {
+      throw new Error("Unexpected response: missing data field");
+    }
+
+    const expiresAt =
+      typeof data.expires_at === "number" ? data.expires_at : undefined;
+    const neverExpires = expiresAt === 0 || expiresAt === undefined;
+    const nowSec = Math.floor(Date.now() / 1000);
+    const daysRemaining =
+      !neverExpires && expiresAt
+        ? Math.floor((expiresAt - nowSec) / 86400)
+        : undefined;
+    const expiresAtIso =
+      !neverExpires && expiresAt
+        ? new Date(expiresAt * 1000).toISOString()
+        : undefined;
+
+    const scopes = Array.isArray(data.scopes)
+      ? (data.scopes as string[])
+      : [];
+
+    return {
+      isValid: Boolean(data.is_valid),
+      tokenType: String(data.type ?? "UNKNOWN"),
+      appId: String(data.app_id ?? ""),
+      userId: data.user_id ? String(data.user_id) : undefined,
+      expiresAt,
+      expiresAtIso,
+      daysRemaining,
+      neverExpires,
+      scopes,
+      rawData: data,
+    };
+  }
+
+  /**
+   * Long-lived User Token を延長する（fb_exchange_token フロー）
+   * 同じエンドポイントに既存のlong-lived tokenを渡すと新しいlong-lived token（60日）を返す
+   * Page Access Token（無期限）の取得にも利用可能
+   */
+  async tokenRefresh(
+    appId: string,
+    appSecret: string,
+  ): Promise<PageTokenRefreshResult> {
+    const url =
+      `${BASE_URL}/oauth/access_token` +
+      `?grant_type=fb_exchange_token` +
+      `&client_id=${encodeURIComponent(appId)}` +
+      `&client_secret=${encodeURIComponent(appSecret)}` +
+      `&fb_exchange_token=${encodeURIComponent(this.pageToken)}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok) {
+      const error = (data as Record<string, unknown>).error as
+        | Record<string, unknown>
+        | undefined;
+      const message = error?.message ?? response.statusText;
+      return {
+        success: false,
+        message: `Token refresh failed: ${message}`,
+      };
+    }
+
+    const result = data as Record<string, unknown>;
+    const newToken = String(result.access_token ?? "");
+    const expiresIn =
+      typeof result.expires_in === "number" ? result.expires_in : undefined;
+    const expiresAt = expiresIn
+      ? Math.floor(Date.now() / 1000) + expiresIn
+      : undefined;
+    const expiresAtIso = expiresAt
+      ? new Date(expiresAt * 1000).toISOString()
+      : undefined;
+
+    return {
+      success: true,
+      newToken,
+      expiresAt,
+      expiresAtIso,
+      message: expiresAtIso
+        ? `Token refreshed. New expiry: ${expiresAtIso}`
+        : "Token refreshed (no expiry info returned)",
+    };
   }
 
   async getInsights(options: PageInsightsOptions): Promise<PageInsight[]> {
