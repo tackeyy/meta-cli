@@ -60,6 +60,28 @@ export function registerAdsCommand(
     });
 
   ads
+    .command("update-url <id>")
+    .description("Update the destination URL of an ad (creates a new creative with the new URL)")
+    .requiredOption("--url <url>", "New destination URL (include UTM parameters)")
+    .action(async (id, opts) => {
+      try {
+        const config = loadConfig();
+        const client = new MacClient(config);
+        const result = await client.updateAdUrl(id, opts.url);
+        const mode = getOutputMode();
+        if (mode === "json") {
+          console.log(JSON.stringify({ id, newCreativeId: result.newCreativeId, updated: true }, null, 2));
+        } else {
+          console.log(`Ad ${id} URL updated. New creative: ${result.newCreativeId}`);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Error: ${message}`);
+        process.exit(1);
+      }
+    });
+
+  ads
     .command("create")
     .description("Create a new ad")
     .requiredOption("--adset-id <id>", "Ad set ID")

@@ -339,6 +339,91 @@ export class MacClient {
     };
   }
 
+  /** Get creative details for an ad (returns object_story_spec and creative ID) */
+  async getAdCreativeDetails(adId: string): Promise<{
+    creativeId: string;
+    objectStorySpec: Record<string, unknown>;
+    title?: string;
+    body?: string;
+  }> {
+    const ad = new Ad(adId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adData = await (ad as any).read(["creative"]);
+    const creativeId = (adData.creative as Record<string, unknown>)?.id as string;
+    if (!creativeId) throw new Error(`No creative found for ad ${adId}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AdCreative = sdk.AdCreative as any;
+    const creative = new AdCreative(creativeId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const creativeData = await (creative as any).read([
+      "object_story_spec",
+      "title",
+      "body",
+      "name",
+    ]);
+
+    return {
+      creativeId,
+      objectStorySpec: creativeData.object_story_spec as Record<string, unknown>,
+      title: creativeData.title as string | undefined,
+      body: creativeData.body as string | undefined,
+    };
+  }
+
+  /** Create a new AdCreative */
+  async createAdCreative(params: {
+    objectStorySpec: Record<string, unknown>;
+    title?: string;
+    body?: string;
+  }): Promise<{ id: string }> {
+    const fields: Record<string, unknown> = {
+      object_story_spec: params.objectStorySpec,
+    };
+    if (params.title) fields.title = params.title;
+    if (params.body) fields.body = params.body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const acct = this.account as any;
+    const result = await acct.createAdCreative([], fields);
+    return { id: result.id };
+  }
+
+  /** Update the destination URL of an ad by creating a new creative with the new URL */
+  async updateAdUrl(adId: string, newUrl: string): Promise<{ newCreativeId: string }> {
+    // 1. Get current creative spec
+    const details = await this.getAdCreativeDetails(adId);
+    if (!details.objectStorySpec) throw new Error("Could not retrieve object_story_spec from creative");
+
+    // 2. Deep-clone and update the URL
+    const spec = JSON.parse(JSON.stringify(details.objectStorySpec)) as Record<string, unknown>;
+    const linkData = spec.link_data as Record<string, unknown> | undefined;
+    if (linkData) {
+      linkData.link = newUrl;
+    } else {
+      // Video ads or other formats — attempt to update call_to_action link
+      const videoData = spec.video_data as Record<string, unknown> | undefined;
+      const cta = videoData?.call_to_action as Record<string, unknown> | undefined;
+      const ctaValue = cta?.value as Record<string, unknown> | undefined;
+      if (ctaValue) {
+        ctaValue.link = newUrl;
+      } else {
+        throw new Error("Could not find link URL in creative spec to update. Unsupported creative format.");
+      }
+    }
+
+    // 3. Create new creative with updated URL
+    const newCreative = await this.createAdCreative({
+      objectStorySpec: spec,
+      title: details.title,
+      body: details.body,
+    });
+
+    // 4. Update ad to use new creative
+    await this.updateAd(adId, { creative: { creative_id: newCreative.id } });
+
+    return { newCreativeId: newCreative.id };
+  }
+
   /** List ads */
   async listAds(adsetId?: string, limit = 50): Promise<AdInfo[]> {
     let ads;
