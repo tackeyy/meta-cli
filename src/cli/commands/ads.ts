@@ -31,6 +31,33 @@ export function registerAdsCommand(
     });
 
   ads
+    .command("get <id>")
+    .description("Get ad creative details including destination URL")
+    .action(async (id) => {
+      try {
+        const config = loadConfig();
+        const client = new MacClient(config);
+        const details = await client.getAdCreativeDetails(id);
+        const mode = getOutputMode();
+        const spec = details.objectStorySpec as Record<string, unknown> | undefined;
+        const linkData = spec?.link_data as Record<string, unknown> | undefined;
+        const videoData = spec?.video_data as Record<string, unknown> | undefined;
+        const url = linkData?.link ?? videoData?.link_description ?? "(URL not found)";
+        if (mode === "json") {
+          console.log(JSON.stringify({ id, creativeId: details.creativeId, url, objectStorySpec: details.objectStorySpec }, null, 2));
+        } else {
+          console.log(`Ad ID:        ${id}`);
+          console.log(`Creative ID:  ${details.creativeId}`);
+          console.log(`URL:          ${url}`);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`Error: ${message}`);
+        process.exit(1);
+      }
+    });
+
+  ads
     .command("update <id>")
     .description("Update an ad")
     .option("--name <name>", "New ad name")
