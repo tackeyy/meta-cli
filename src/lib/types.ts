@@ -79,6 +79,7 @@ export interface PagePost {
   message: string;
   createdTime: string;
   type: string;
+  permalinkUrl?: string;
 }
 
 export interface PageInsight {

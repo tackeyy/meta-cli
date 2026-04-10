@@ -80,7 +80,7 @@ describe("PagesClient", () => {
   });
 
   describe("listPosts", () => {
-    it("returns recent posts", async () => {
+    it("returns recent posts with attachment type", async () => {
       mockFetch.mockResolvedValueOnce(
         mockResponse({
           data: [
@@ -88,13 +88,16 @@ describe("PagesClient", () => {
               id: "123_1",
               message: "First post",
               created_time: "2026-03-25T10:00:00+0000",
-              type: "status",
+              permalink_url: "https://www.facebook.com/123/posts/1",
             },
             {
               id: "123_2",
               message: "Second post",
               created_time: "2026-03-24T10:00:00+0000",
-              type: "link",
+              permalink_url: "https://www.facebook.com/123/posts/2",
+              attachments: {
+                data: [{ type: "share", title: "Link", url: "https://example.com" }],
+              },
             },
           ],
         }),
@@ -104,9 +107,14 @@ describe("PagesClient", () => {
       expect(posts).toHaveLength(2);
       expect(posts[0].id).toBe("123_1");
       expect(posts[0].message).toBe("First post");
+      expect(posts[0].type).toBe("status");
+      expect(posts[0].permalinkUrl).toBe("https://www.facebook.com/123/posts/1");
+      expect(posts[1].type).toBe("share");
 
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toContain("limit=5");
+      expect(url).not.toContain("fields=id,message,created_time,type");
+      expect(url).toContain("attachments");
     });
   });
 

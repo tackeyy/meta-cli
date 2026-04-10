@@ -110,16 +110,23 @@ export class PagesClient {
   async listPosts(options: ListPagePostsOptions = {}): Promise<PagePost[]> {
     const limit = options.limit ?? 10;
     const data = await this.request<Record<string, unknown>>(
-      `/${this.pageId}/feed?fields=id,message,created_time,type&limit=${limit}`,
+      `/${this.pageId}/feed?fields=id,message,created_time,permalink_url,attachments{type,title,url}&limit=${limit}`,
     );
 
     const posts = (data.data ?? []) as Record<string, unknown>[];
-    return posts.map((p) => ({
-      id: String(p.id),
-      message: String(p.message ?? ""),
-      createdTime: String(p.created_time),
-      type: String(p.type ?? "status"),
-    }));
+    return posts.map((p) => {
+      const attachments = p.attachments as
+        | { data?: Array<{ type?: string }> }
+        | undefined;
+      const attachmentType = attachments?.data?.[0]?.type;
+      return {
+        id: String(p.id),
+        message: String(p.message ?? ""),
+        createdTime: String(p.created_time),
+        type: attachmentType ?? "status",
+        permalinkUrl: p.permalink_url ? String(p.permalink_url) : undefined,
+      };
+    });
   }
 
   async updateCoverPhoto(imagePath: string): Promise<PageCoverPhotoResult> {
