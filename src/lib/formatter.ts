@@ -104,6 +104,11 @@ export function formatInsights(
   if (mode === "json") return JSON.stringify(insights, null, 2);
   if (insights.length === 0) return "No data available for the specified period.";
 
+  const formatBreakdowns = (breakdowns?: Record<string, string>): string =>
+    Object.entries(breakdowns || {})
+      .map(([key, value]) => `${key}=${value}`)
+      .join(",");
+
   if (mode === "plain") {
     return insights
       .map(
@@ -120,6 +125,7 @@ export function formatInsights(
             r.cpc,
             r.ctr,
             r.cpm,
+            formatBreakdowns(r.breakdowns),
           ].join("\t"),
       )
       .join("\n");
@@ -131,9 +137,14 @@ export function formatInsights(
     return [
       `  ${label}`,
       `    Period: ${r.dateStart} — ${r.dateStop}`,
+      r.breakdowns && Object.keys(r.breakdowns).length > 0
+        ? `    Breakdown: ${formatBreakdowns(r.breakdowns)}`
+        : undefined,
       `    Impressions: ${r.impressions.toLocaleString()}  |  Clicks: ${r.clicks.toLocaleString()}`,
       `    Spend: ${r.spend.toFixed(2)}  |  CPC: ${r.cpc.toFixed(2)}  |  CTR: ${r.ctr.toFixed(2)}%  |  CPM: ${r.cpm.toFixed(2)}`,
-    ].join("\n");
+    ]
+      .filter((line): line is string => typeof line === "string")
+      .join("\n");
   });
 
   return ["Performance Report", "=".repeat(60), ...rows].join("\n\n");

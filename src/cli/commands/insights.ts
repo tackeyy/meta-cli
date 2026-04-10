@@ -14,6 +14,10 @@ export function registerInsightsCommand(
     .option("--level <level>", "Aggregation level: campaign|adset|ad", "campaign")
     .option("--from <date>", "Start date (YYYY-MM-DD)")
     .option("--to <date>", "End date (YYYY-MM-DD)")
+    .option(
+      "--breakdown <list>",
+      "Comma-separated breakdowns (e.g. device_platform)",
+    )
     .option("--limit <n>", "Number of results", "100")
     .action(async (opts) => {
       try {
@@ -23,6 +27,7 @@ export function registerInsightsCommand(
           level: opts.level as InsightLevel,
           from: opts.from,
           to: opts.to,
+          breakdown: opts.breakdown,
           limit: Number(opts.limit),
         });
         console.log(formatInsights(insights, getOutputMode()));

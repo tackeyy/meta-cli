@@ -46,6 +46,9 @@ describe("formatInsights", () => {
       dateStart: "2026-03-01",
       dateStop: "2026-03-07",
       campaignName: "Lead Gen",
+      breakdowns: {
+        device_platform: "mobile_app",
+      },
       impressions: 10000,
       clicks: 250,
       spend: 50.5,
@@ -64,8 +67,14 @@ describe("formatInsights", () => {
   it("formats as human-readable", () => {
     const result = formatInsights(insights, "human");
     expect(result).toContain("Lead Gen");
+    expect(result).toContain("device_platform=mobile_app");
     expect(result).toContain("10,000");
     expect(result).toContain("50.50");
+  });
+
+  it("formats breakdowns in plain output", () => {
+    const result = formatInsights(insights, "plain");
+    expect(result).toContain("device_platform=mobile_app");
   });
 
   it("shows message when empty", () => {

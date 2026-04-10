@@ -49,6 +49,7 @@ export interface InsightRow {
   cpc: number;
   ctr: number;
   cpm: number;
+  breakdowns?: Record<string, string>;
   actions?: Array<{ actionType: string; value: string }>;
 }
 

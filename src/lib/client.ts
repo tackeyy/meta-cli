@@ -453,6 +453,7 @@ export class MacClient {
     from?: string;
     to?: string;
     limit?: number;
+    breakdown?: string;
   }): Promise<InsightRow[]> {
     const fields = [
       "impressions",
@@ -485,6 +486,14 @@ export class MacClient {
       };
     }
 
+    const breakdownKeys = (params.breakdown || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (breakdownKeys.length > 0) {
+      apiParams.breakdowns = breakdownKeys.join(",");
+    }
+
     const insights = await this.account.getInsights(fields, apiParams);
 
     return insights.map((row: Record<string, unknown>) => ({
@@ -502,6 +511,16 @@ export class MacClient {
       cpc: Number(row.cpc) || 0,
       ctr: Number(row.ctr) || 0,
       cpm: Number(row.cpm) || 0,
+      breakdowns:
+        breakdownKeys.length > 0
+          ? Object.fromEntries(
+              breakdownKeys
+                .map((key) => [key, row[key]])
+                .filter((entry): entry is [string, string] =>
+                  typeof entry[1] === "string",
+                ),
+            )
+          : undefined,
       actions: row.actions as
         | Array<{ actionType: string; value: string }>
         | undefined,

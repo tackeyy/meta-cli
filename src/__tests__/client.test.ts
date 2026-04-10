@@ -235,5 +235,39 @@ describe("MacClient", () => {
       expect(result[0].clicks).toBe(100);
       expect(result[0].spend).toBe(25.5);
     });
+
+    it("should pass breakdowns and map breakdown fields", async () => {
+      mockAccount.getInsights.mockResolvedValueOnce([
+        {
+          date_start: "2026-03-01",
+          date_stop: "2026-03-07",
+          campaign_name: "Campaign A",
+          device_platform: "mobile_app",
+          impressions: "3000",
+          clicks: "90",
+          spend: "18.00",
+          cpc: "0.20",
+          ctr: "3.0",
+          cpm: "6.00",
+        },
+      ]);
+
+      const result = await client.getInsights({
+        level: "campaign",
+        from: "2026-03-01",
+        to: "2026-03-07",
+        breakdown: "device_platform",
+      });
+
+      expect(mockAccount.getInsights).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.objectContaining({
+          breakdowns: "device_platform",
+        }),
+      );
+      expect(result[0].breakdowns).toEqual({
+        device_platform: "mobile_app",
+      });
+    });
   });
 });

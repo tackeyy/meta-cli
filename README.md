@@ -114,6 +114,7 @@ meta-cli images upload --file ./banner.png   # Returns image hash
 meta-cli insights --level campaign --from 2026-03-01 --to 2026-03-31
 meta-cli insights --level adset --json
 meta-cli insights --level ad --from 2026-03-01 --to 2026-03-31
+meta-cli insights --from 2026-03-01 --to 2026-03-31 --breakdown device_platform
 ```
 
 ### Targeting Search
