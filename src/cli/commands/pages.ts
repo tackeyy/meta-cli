@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { PagesClient } from "../../lib/pages-client.js";
+import { resolveInspectorToken } from "../../lib/inspector-token.js";
 import type { OutputMode } from "../../lib/types.js";
 
 function getPagesClient(): PagesClient {
@@ -130,20 +131,18 @@ export function registerPagesCommand(
   pages
     .command("token-info")
     .description(
-      "Check token validity and expiry via /debug_token (requires META_ADS_ACCESS_TOKEN as inspector token)",
+      "Check token validity and expiry via /debug_token (uses ZEIMU_FB_APP_ID|ZEIMU_FB_APP_SECRET as App Access Token, falls back to META_ADS_ACCESS_TOKEN)",
     )
     .action(async () => {
       try {
-        // META_ADS_ACCESS_TOKEN を inspector token として使用
-        // (同アプリの有効なトークンなら debug_token の access_token に使える)
-        const inspectorToken = process.env.META_ADS_ACCESS_TOKEN;
-        if (!inspectorToken) {
+        const resolved = resolveInspectorToken(process.env);
+        if (!resolved.token) {
           console.error(
-            "Error: META_ADS_ACCESS_TOKEN must be set (used as inspector token for /debug_token)",
+            "Error: inspector token unavailable. Set either ZEIMU_FB_APP_ID + ZEIMU_FB_APP_SECRET (recommended, never expires) or META_ADS_ACCESS_TOKEN.",
           );
           process.exit(1);
         }
-        const result = await getPagesClient().tokenInfo(inspectorToken);
+        const result = await getPagesClient().tokenInfo(resolved.token);
         if (getOutputMode() === "json") {
           console.log(JSON.stringify(result, null, 2));
         } else {
